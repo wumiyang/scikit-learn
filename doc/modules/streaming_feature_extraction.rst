@@ -3,7 +3,10 @@
 Streaming Feature Extraction and Learning
 ==========================================
 
-Often we are training on data that won't all fit into memory at once.
+Often when we are training on data it won't all fit into memory at
+once. In these cases, it is advantaegous to train the in
+minibatches. This is supported across many of the included classifiers
+using the `partial_fit` method
  
 Streaming Text Feature Extraction
 ---------------------------------
@@ -16,33 +19,6 @@ Streaming Text Feature Extraction
    ...     'And the third one.',
    ...     'Is this the first document?',
    ... ]
-
-::
-
-    >>> class InfiniteStreamGenerator(object):
-    ... """Simulate random polarity queries on the twitter streaming API"""
-    ...
-    ...     def __init__(self, texts, targets, seed=0, batchsize=100):
-    ...            self.texts_pos = [text for text, target in zip(texts, targets)
-    ...                                   if target > 0]
-    ...            self.texts_neg = [text for text, target in zip(texts, targets)
-    ...                                   if target <= 0]
-    ...            self.rng = Random(seed)
-    ...            self.batchsize = batchsize
-    ...
-    ...         def next_batch(self, batchsize=None):
-    ...            batchsize = self.batchsize if batchsize is None else batchsize
-    ...            texts, targets = [], []
-    ...            for i in range(batchsize):
-    ...                # Select the polarity randomly
-    ...                target = self.rng.choice((-1, 1))
-    ...                targets.append(target)
-    ...
-    ...                 # Combine 2 random texts of the right polarity
-    ...                pool = self.texts_pos if target > 0 else self.texts_neg
-    ...                text = self.rng.choice(pool) + " " + self.rng.choice(pool)
-    ...                texts.append(text)
-    ...            return texts, targets
 
 ::
 
@@ -79,7 +55,39 @@ Streaming Text Feature Extraction
    ...    if i % 100 == 0:
    ...        print("n_samples: {0}, score: {1:.4f}".format(n_samples, score))
 
+We can go a step further and continuously train new predictors on data
+coming from a potentially neverending process. In this case, we never
+stop training, but have better and better predictors for our program
+to use as data streams in.
+
+We simulate a neverending stream using `InfiniteStreamGenerator`
 ::
+
+    >>> class InfiniteStreamGenerator(object):
+    ... """Simulate random polarity queries on the twitter streaming API"""
+    ...
+    ...     def __init__(self, texts, targets, seed=0, batchsize=100):
+    ...            self.texts_pos = [text for text, target in zip(texts, targets)
+    ...                                   if target > 0]
+    ...            self.texts_neg = [text for text, target in zip(texts, targets)
+    ...                                   if target <= 0]
+    ...            self.rng = Random(seed)
+    ...            self.batchsize = batchsize
+    ...
+    ...         def next_batch(self, batchsize=None):
+    ...            batchsize = self.batchsize if batchsize is None else batchsize
+    ...            texts, targets = [], []
+    ...            for i in range(batchsize):
+    ...                # Select the polarity randomly
+    ...                target = self.rng.choice((-1, 1))
+    ...                targets.append(target)
+    ...
+    ...                 # Combine 2 random texts of the right polarity
+    ...                pool = self.texts_pos if target > 0 else self.texts_neg
+    ...                text = self.rng.choice(pool) + " " + self.rng.choice(pool)
+    ...                texts.append(text)
+    ...            return texts, targets
+
 
 
 Streaming Learning
